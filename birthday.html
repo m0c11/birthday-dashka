@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            pointer-events: none;
+        }
+
+        #matrix-canvas.active { opacity: 1; }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .start-btn {
+            padding: 20px 50px;
+            font-size: 24px;
+            background: transparent;
+            border: 3px solid #ff69b4;
+            color: #ff69b4;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            margin-top: 30px;
+        }
+
+        .start-btn:hover {
+            background: #ff69b4;
+            color: #000;
+            box-shadow: 0 0 40px #ff69b4, 0 0 60px #ff69b4;
+            transform: scale(1.05);
+        }
+
+        .launch-sequence {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .launch-sequence.active { display: block; }
+
+        .launch-text {
+            font-size: 18px;
+            color: #ff69b4;
+            text-shadow: 0 0 10px #ff69b4;
+            margin: 5px 0;
+            opacity: 0;
+            animation: typeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes typeIn {
+            0% { opacity: 0; transform: translateX(-20px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .launch-complete {
+            font-size: 24px;
+            color: #ff69b4;
+            text-shadow: 0 0 20px #ff69b4;
+            margin-top: 20px;
+            opacity: 0;
+            animation: glowPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { text-shadow: 0 0 20px #ff69b4, 0 0 40px #ff69b4; }
+            50% { text-shadow: 0 0 30px #ff69b4, 0 0 60px #ff69b4; }
+        }
+
+        .countdown {
+            font-size: 150px;
+            font-weight: bold;
+            color: #ff69b4;
+            text-shadow: 0 0 20px #ff69b4, 0 0 40px #ff69b4, 0 0 60px #ff69b4;
+            display: none;
+            animation: countPulse 1s ease-in-out;
+        }
+
+        .countdown.active { display: block; }
+
+        @keyframes countPulse {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .birthday-message {
+            text-align: center;
+            display: none;
+            animation: fadeIn 2s ease-in;
+        }
+
+        .birthday-message.active { display: block; }
+
+        .birthday-message h1 {
+            font-size: 60px;
+            color: #ff69b4;
+            text-shadow: 0 0 20px #ff69b4, 0 0 40px #ff69b4;
+            margin: 20px 0;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px #ff69b4, 0 0 30px #ff69b4; }
+            50% { text-shadow: 0 0 30px #ff69b4, 0 0 50px #ff69b4, 0 0 60px #ff69b4; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .heart-icon {
+            font-size: 100px;
+            color: #ff69b4;
+            animation: heartbeat 1.5s ease-in-out infinite;
+            margin: 30px 0;
+            display: block;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            10%, 30% { transform: scale(1.1); }
+            20%, 40% { transform: scale(1); }
+        }
+
+        .gallery {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            animation: fadeIn 2s ease-in;
+        }
+
+        .gallery.active { display: grid; }
+
+        .photo-card {
+            background: rgba(255, 105, 180, 0.1);
+            border: 2px solid #ff69b4;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .photo-card:hover {
+            transform: translateY(-10px) scale(1.5);
+            box-shadow: 0 15px 40px rgba(255, 105, 180, 0.6);
+            z-index: 100;
+            border-width: 3px;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .photo-message {
+            text-align: center;
+            padding: 10px;
+            color: #ff69b4;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .photo-card:hover .photo-message {
+            font-size: 16px;
+            padding: 12px;
+        }
+
+        .heart-collage {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .heart-collage.active { display: block; }
+
+        .mosaic-photo {
+            position: absolute;
+            border: 3px solid #ff69b4;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.6);
+            transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+            pointer-events: auto;
+        }
+
+        .mosaic-photo:hover {
+            transform: scale(3) !important;
+            z-index: 1000;
+            box-shadow: 0 0 40px rgba(255, 105, 180, 1);
+        }
+
+        .mosaic-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mosaic-photo.disappearing {
+            animation: disappearHeart 3s ease-in-out forwards;
+        }
+
+        @keyframes disappearHeart {
+            0% { transform: scale(1); opacity: 1; }
+            20% { transform: scale(1.2); opacity: 1; }
+            50% { transform: scale(0.5) rotate(180deg); opacity: 0.5; }
+            100% { transform: scale(0) rotate(360deg); opacity: 0; }
+        }
+
+        .fly {
+            transition: all 1.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* ✅ ОПТИМИЗИРОВАННЫЙ КУРСОР */
+        .cursor-heart {
+            position: fixed;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 9999;
+            animation: heartFade 0.6s ease-out forwards;
+            will-change: transform, opacity;
+            transform: translateZ(0);
+        }
+
+        @keyframes heartFade {
+            0% { opacity: 1; transform: translateZ(0) scale(1); }
+            100% { opacity: 0; transform: translateZ(0) scale(0.3); }
+        }
+
+        .firework {
+            position: fixed;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .firework-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            animation: explode 1.5s ease-out forwards;
+            will-change: transform, opacity;
+            transform: translateZ(0);
+        }
+
+        @keyframes explode {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)); opacity: 0; }
+        }
+
+        .love-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1000;
+            display: none;
+            animation: loveAppear 2s ease-out;
+        }
+
+        .love-message.active { display: block; }
+
+        @keyframes loveAppear {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .love-message h1 {
+            font-size: 80px;
+            color: #ff69b4;
+            text-shadow: 0 0 30px #ff69b4, 0 0 60px #ff69b4, 0 0 90px #ff69b4;
+            animation: loveGlow 2s ease-in-out infinite;
+            margin: 20px 0;
+        }
+
+        @keyframes loveGlow {
+            0%, 100% { text-shadow: 0 0 30px #ff69b4, 0 0 60px #ff69b4, 0 0 90px #ff69b4; }
+            50% { text-shadow: 0 0 50px #ff69b4, 0 0 100px #ff69b4, 0 0 150px #ff69b4; }
+        }
+
+        .love-heart {
+            font-size: 120px;
+            animation: loveBeat 1s ease-in-out infinite;
+            display: block;
+        }
+
+        @keyframes loveBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .falling-light {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: #ff69b4;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ff69b4, 0 0 20px #ff69b4;
+            pointer-events: none;
+            animation: fall linear forwards;
+            z-index: 50;
+        }
+
+        @keyframes fall {
+            from { transform: translateY(-10vh); opacity: 1; }
+            to { transform: translateY(110vh); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .birthday-message h1 { font-size: 40px; }
+            .countdown { font-size: 100px; }
+            .gallery { grid-template-columns: repeat(2, 1fr); max-width: 500px; }
+            .photo-card img { height: 150px; }
+            .love-message h1 { font-size: 50px; }
+            .launch-text { font-size: 14px; }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="content">
+        <div id="start-screen">
+            <button class="start-btn" onclick="startCelebration()">🎉 Начать праздник 🎉</button>
+        </div>
+
+        <div id="launch-sequence" class="launch-sequence"></div>
+        <div id="countdown" class="countdown"></div>
+
+        <div id="birthday-message" class="birthday-message">
+            <span class="heart-icon">💖</span>
+            <h1>HAPPY BIRTHDAY</h1>
+            <h1 style="font-size: 80px">TO</h1>
+            <h1 style="font-size: 80px">ДАШУЛИК! 💕</h1>
+            <button class="start-btn" onclick="showGallery()">📸 Улыбнись 📸</button>
+        </div>
+
+        <div id="gallery" class="gallery">
+            <div class="photo-card">
+                <img src="1.jpg" alt="Photo 1">
+                <div class="photo-message">Никогда не забуду фразу:"А ты не знаешь группу поддержку Бурана?" 🧡</div>
+            </div>
+            <div class="photo-card">
+                <img src="5.jpg" alt="Photo 2">
+                <div class="photo-message">Твоя улыбка это лучший бриллиант, укращающий тебя💕</div>
+            </div>
+            <div class="photo-card">
+                <img src="7.jpg" alt="Photo 3">
+                <div class="photo-message">Будь счастлива, ведь ты этого достойна 💖</div>
+            </div>
+            <div class="photo-card">
+                <img src="6.jpg" alt="Photo 4">
+                <div class="photo-message">Ты в моей памяти и голове навсегда 💝</div>
+            </div>
+            <div class="photo-card">
+                <img src="2.jpg" alt="Photo 5">
+                <div class="photo-message">Твой глаз без пегмента это что-то невообразимое 💗</div>
+            </div>
+            <div class="photo-card">
+                <img src="4.jpg" alt="Photo 6">
+                <div class="photo-message">Не слушай других, ты почти во всем идеальна, а если не идеально в чем-то, будешь скоро 💞</div>
+            </div>
+        </div>
+
+        <button id="collage-btn" class="start-btn" style="display: none" onclick="showCollage()">💗 МЯУ 💗</button>
+        <div id="heart-collage" class="heart-collage"></div>
+
+        <div id="love-message" class="love-message">
+            <span class="love-heart">💖</span>
+            <h1>Я ТЕБЯ ЛЮБЛЮ</h1>
+            <span class="love-heart">💕</span>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // MATRIX EFFECT
+        // ============================================
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*💖💕';
+        const arr = letters.split('');
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) { drops[i] = 1; }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ff69b4';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = arr[Math.floor(Math.random() * arr.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) { drops[i] = 0; }
+                drops[i]++;
+            }
+        }
+
+        let matrixInterval;
+        function startMatrix() {
+            resizeCanvas();
+            matrixInterval = setInterval(drawMatrix, 35);
+            canvas.classList.add('active');
+        }
+
+        window.addEventListener('resize', () => { resizeCanvas(); });
+
+        // ============================================
+        // ✅ ОПТИМИЗИРОВАННЫЙ КУРСОР
+        // ============================================
+        let lastHeartTime = 0;
+        const HEART_DELAY = 200; // ✅ Увеличили задержку (было 100)
+        const maxHearts = 15; // ✅ Ограничение количества сердец
+        let heartCount = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            const now = Date.now();
+            if (now - lastHeartTime > HEART_DELAY && heartCount < maxHearts) {
+                createCursorHeart(e.clientX, e.clientY);
+                lastHeartTime = now;
+            }
+        });
+
+        function createCursorHeart(x, y) {
+            const heart = document.createElement('div');
+            heart.className = 'cursor-heart';
+            heart.textContent = '💖';
+            heart.style.left = (x - 8) + 'px';
+            heart.style.top = (y - 8) + 'px';
+            document.body.appendChild(heart);
+            heartCount++;
+
+            setTimeout(() => {
+                heart.remove();
+                heartCount--;
+            }, 600);
+        }
+
+        // ============================================
+        // PROGRAM LAUNCH SEQUENCE
+        // ============================================
+        const launchMessages = [
+            '💖 Initializing birthday program...',
+            '💕 Loading love modules...',
+            '💗 Connecting to heart database...',
+            '💞 Decrypting special memories...',
+            '💓 Accessing photo gallery...',
+            '💖 Preparing surprise...',
+            '💕 System ready...',
+            '💗 Launch sequence initiated...'
+        ];
+
+        async function showLaunchSequence() {
+            const sequence = document.getElementById('launch-sequence');
+            sequence.classList.add('active');
+            sequence.innerHTML = '';
+
+            for (let i = 0; i < launchMessages.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const line = document.createElement('div');
+                line.className = 'launch-text';
+                line.textContent = `> ${launchMessages[i]}`;
+                line.style.animationDelay = `${i * 0.1}s`;
+                sequence.appendChild(line);
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const complete = document.createElement('div');
+            complete.className = 'launch-complete';
+            complete.textContent = '✓ PROGRAM LAUNCHED SUCCESSFULLY';
+            sequence.appendChild(complete);
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            sequence.classList.remove('active');
+            sequence.innerHTML = '';
+        }
+
+        // ============================================
+        // ✅ ОПТИМИЗИРОВАННЫЕ ФЕЙЕРВЕРКИ
+        // ============================================
+        function createFirework(x, y) {
+            const colors = ['#ff69b4', '#ff1493', '#ffb6c1'];
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = x + 'px';
+            firework.style.top = y + 'px';
+
+            const particleCount = 30; // ✅ Уменьшили с 50 до 30
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'firework-particle';
+
+                const angle = (Math.PI * 2 / particleCount) * i;
+                const velocity = 80 + Math.random() * 70; // ✅ Уменьшили скорость
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity;
+
+                particle.style.setProperty('--tx', tx + 'px');
+                particle.style.setProperty('--ty', ty + 'px');
+
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.background = color;
+                particle.style.boxShadow = `0 0 8px ${color}`; // ✅ Упростили тень
+
+                firework.appendChild(particle);
+            }
+
+            document.body.appendChild(firework);
+            setTimeout(() => { firework.remove(); }, 1500);
+        }
+
+        let fireworksInterval;
+        function launchFireworks() {
+            fireworksInterval = setInterval(() => {
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * (window.innerHeight / 2);
+                createFirework(x, y);
+                // ✅ Убрали дополнительные залпы для производительности
+            }, 800); // ✅ Увеличили интервал (было 400)
+        }
+
+        function stopFireworks() {
+            if (fireworksInterval) { clearInterval(fireworksInterval); }
+        }
+
+        function launchMassiveFireworks() {
+            let count = 0;
+            const massiveInterval = setInterval(() => {
+                // ✅ Запускаем только 2 фейерверка вместо 5
+                for (let i = 0; i < 2; i++) {
+                    createFirework(
+                        Math.random() * window.innerWidth,
+                        Math.random() * window.innerHeight
+                    );
+                }
+                count++;
+                if (count > 10) { // ✅ Уменьшили количество с 20 до 10
+                    clearInterval(massiveInterval);
+                }
+            }, 400); // ✅ Увеличили интервал
+        }
+
+        // ============================================
+        // CELEBRATION SEQUENCE
+        // ============================================
+        async function startCelebration() {
+            document.getElementById('start-screen').style.display = 'none';
+            await showLaunchSequence();
+
+            const c = document.getElementById('countdown');
+            c.classList.add('active');
+
+            for (let i = 3; i >= 1; i--) {
+                c.textContent = i;
+                c.style.animation = 'none';
+                c.offsetHeight;
+                c.style.animation = 'countPulse 1s ease-in-out';
+                await new Promise(r => setTimeout(r, 1000));
+            }
+
+            c.classList.remove('active');
+            document.getElementById('birthday-message').classList.add('active');
+            startMatrix();
+        }
+
+        function showGallery() {
+            document.getElementById('birthday-message').classList.remove('active');
+            document.getElementById('gallery').classList.add('active');
+            document.getElementById('collage-btn').style.display = 'block';
+        }
+
+        function startLights() {
+            setInterval(() => {
+                const light = document.createElement('div');
+                light.className = 'falling-light';
+                light.style.left = Math.random() * window.innerWidth + 'px';
+                const size = Math.random() * 6 + 3;
+                light.style.width = size + 'px';
+                light.style.height = size + 'px';
+                const duration = Math.random() * 3 + 3;
+                light.style.animationDuration = duration + 's';
+                document.body.appendChild(light);
+                setTimeout(() => { light.remove(); }, duration * 1000);
+            }, 120);
+        }
+
+        // ============================================
+        // HEART COLLAGE
+        // ============================================
+        function showCollage() {
+            document.getElementById('gallery').classList.remove('active');
+            document.getElementById('collage-btn').style.display = 'none';
+
+            createHeart();
+            startLights();
+            document.getElementById('heart-collage').classList.add('active');
+
+            setTimeout(() => {
+                disappearHeartBeautifully();
+            }, 15000);
+        }
+
+        function disappearHeartBeautifully() {
+            const photos = document.querySelectorAll('.mosaic-photo');
+            
+            photos.forEach((photo, index) => {
+                setTimeout(() => {
+                    photo.classList.add('disappearing');
+                }, index * 50);
+            });
+
+            setTimeout(() => {
+                document.getElementById('heart-collage').classList.remove('active');
+                document.getElementById('love-message').classList.add('active');
+                
+                launchMassiveFireworks();
+                launchFireworks();
+            }, 3500);
+        }
+
+        function createHeart() {
+            const collage = document.getElementById('heart-collage');
+            const photos = ['1.jpg', '2.jpg', '8.jpg', '9.jpg', '10.jpg', '6.jpg', '11.jpg'];
+
+            const block = Math.min(window.innerWidth, window.innerHeight) / 14;
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2 - 120;
+
+            const heart = [
+                [-2, -3], [-1, -3], [1, -3], [2, -3],
+                [-3, -2], [-2, -2], [-1, -2], [0, -2], [1, -2], [2, -2], [3, -2],
+                [-4, -1], [-3, -1], [-2, -1], [-1, -1], [0, -1], [1, -1], [2, -1], [3, -1], [4, -1],
+                [-4, 0], [-3, 0], [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0], [3, 0], [4, 0],
+                [-4, 1], [-3, 1], [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1],
+                [-3, 2], [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2], [3, 2],
+                [-2, 3], [-1, 3], [0, 3], [1, 3], [2, 3],
+                [-1, 4], [0, 4], [1, 4],
+                [0, 5]
+            ];
+
+            let index = 0;
+            heart.forEach((p, i) => {
+                const div = document.createElement('div');
+                div.className = 'mosaic-photo';
+
+                const size = block * 0.9;
+                div.style.width = size + 'px';
+                div.style.height = size + 'px';
+
+                div.innerHTML = `<img src="${photos[index % photos.length]}">`;
+
+                const startX = Math.random() * window.innerWidth;
+                const startY = Math.random() * window.innerHeight;
+                div.style.left = startX + 'px';
+                div.style.top = startY + 'px';
+
+                collage.appendChild(div);
+
+                setTimeout(() => {
+                    div.classList.add('fly');
+                    div.style.left = cx + p[0] * block + 'px';
+                    div.style.top = cy + p[1] * block + 'px';
+                }, 200 + i * 40);
+
+                index++;
+            });
+        }
+    </script>
+</body>
+</html>
